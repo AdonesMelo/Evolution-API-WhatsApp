@@ -1,0 +1,55 @@
+version: '3.9'
+
+services:
+  evolution-api:
+    container_name: evolution_api
+    image: evoapicloud/evolution-api:v2.1.1 
+    restart: always
+    networks:
+      - evolution-net
+    ports:
+      - "8080:8080"
+    env_file:
+      - .env
+    volumes:
+      - evolution_instances:/evolution/instances
+    depends_on:
+      - postgres
+      - redis
+
+  postgres:
+    container_name: postgres
+    image: postgres:15
+    networks:
+      - evolution-net
+    command: ["postgres", "-c", "max_connections=1000"]
+    restart: always
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_PASSWORD=postgres
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+
+  redis:
+    container_name: redis
+    image: redis:latest
+    networks:
+      - evolution-net
+    command: redis-server --port 6379 --appendonly yes
+    restart: always
+    ports:
+      - "6379:6379"
+    volumes:
+      - evolution_redis:/data
+
+volumes:
+  evolution_instances:
+  postgres_data:
+  evolution_redis:
+
+networks:
+  evolution-net:
+    name: evolution-net
+    driver: bridge
